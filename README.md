@@ -78,15 +78,8 @@ Learning by doing:
 - practical DevOps workflows using OpenClaw
 
 
-## Gemini 3.1 integration
+## Current demo mode
 
-Backend endpoint: `POST /generate` (calls Gemini API)
-Frontend endpoint: `POST /api/generate` (Next.js server route proxy)
-
-### Required env vars
-
-- Backend app:
-  - `GEMINI_API_KEY=...`
-  - `GEMINI_MODEL=gemini-3.1-pro` (optional; defaults to this)
-- Web app:
-  - `API_INTERNAL_URL=http://backend-api:8010`
+- No runtime model API key required.
+- Frontend design is static and responsive (100vw/100vh).
+- Frontend interacts with backend using `/api/hello` -> `API_INTERNAL_URL`.
