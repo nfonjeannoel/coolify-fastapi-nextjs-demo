@@ -1,12 +1,40 @@
-# Coolify FastAPI + Next.js Demo
+# Learning CI/CD with OpenClaw: FastAPI + Next.js on Coolify
 
-A minimal full-stack demo for Coolify:
-- `api/` — FastAPI service
-- `web/` — Next.js single-page frontend
+This repo documents my hands-on learning journey setting up a full-stack app and production-style delivery flow with OpenClaw.
+
+## What this project demonstrates
+
+- **Backend:** FastAPI service (`api/`)
+- **Frontend:** Next.js app (`web/`)
+- **Deployment:** Coolify (Docker-based)
+- **CD:** Deploy from GitHub to Coolify
+- **CI:** GitHub Actions checks for API + Web
+- **Best-practice networking:** frontend calls a server route, which calls backend over Coolify internal network
+
+---
+
+## Architecture (best-practice)
+
+Browser -> Frontend domain -> Next.js server route (`/api/hello`) -> `API_INTERNAL_URL` -> Backend container
+
+This avoids CORS/browser-to-private-network problems.
+
+### Important env var (web app)
+
+```env
+API_INTERNAL_URL=http://backend-api:8010
+```
+
+### Coolify recommendation
+
+Set backend **Network Alias** to `backend-api` so app renames do not break internal calls.
+
+---
 
 ## Local run (optional)
 
 ### API
+
 ```bash
 cd api
 python3 -m venv .venv && source .venv/bin/activate
@@ -15,20 +43,36 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8010
 ```
 
 ### Web
+
 ```bash
 cd web
 npm install
 npm run dev
 ```
 
-Set `NEXT_PUBLIC_API_URL` for web (e.g. `http://localhost:8010`).
+Open `http://localhost:3000` and test the button.
 
+---
 
-## Coolify best-practice networking
+## CI checks (GitHub Actions)
 
-For production-style setup, the web app calls its own Next.js API route (`/api/hello`) and that route calls the backend over the private Coolify network using `API_INTERNAL_URL` (default `http://demo-api:8010`).
+Workflow: `.github/workflows/ci.yml`
 
-- In **web** app env, set: `API_INTERNAL_URL=http://backend-api:8010`
-- You no longer need `NEXT_PUBLIC_API_URL` for backend access.
+- **API checks (FastAPI)**
+  - install deps
+  - syntax check
+  - smoke tests (`/health`, `/hello`)
+- **Web checks (Next.js)**
+  - install deps
+  - build check
 
-- In Coolify, set backend app **Network Alias** to `backend-api` so app renames do not break connectivity.
+---
+
+## Why this repo exists
+
+Learning by doing:
+- infra basics
+- container networking
+- secure service-to-service communication
+- CI/CD foundations
+- practical DevOps workflows using OpenClaw
