@@ -4,17 +4,17 @@ services:
       context: ./api
     container_name: coolify-demo-api
     environment:
-      - PORT=8000
+      - PORT=8010
     ports:
-      - "8000:8000"
+      - "8010:8010"
 
   web:
     build:
       context: ./web
     container_name: coolify-demo-web
     environment:
-      - NEXT_PUBLIC_API_URL=http://api:8000
+      - NEXT_PUBLIC_API_URL=http://api:8010
     ports:
-      - "3000:3000"
+      - "3010:3010"
     depends_on:
       - api

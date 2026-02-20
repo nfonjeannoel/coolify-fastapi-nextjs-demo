@@ -11,7 +11,7 @@ A minimal full-stack demo for Coolify:
 cd api
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload --host 0.0.0.0 --port 8010
 ```
 
 ### Web
@@ -21,4 +21,4 @@ npm install
 npm run dev
 ```
 
-Set `NEXT_PUBLIC_API_URL` for web (e.g. `http://localhost:8000`).
+Set `NEXT_PUBLIC_API_URL` for web (e.g. `http://localhost:8010`).

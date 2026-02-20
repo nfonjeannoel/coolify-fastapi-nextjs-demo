@@ -7,7 +7,7 @@ export default function HomePage() {
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010';
 
   async function callApi() {
     setLoading(true);
