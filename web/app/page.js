@@ -3,24 +3,19 @@
 import { useState } from 'react';
 
 export default function HomePage() {
-  const [prompt, setPrompt] = useState('Build me a playful hero section for a fintech app.');
-  const [result, setResult] = useState('');
+  const [name, setName] = useState('Jeannoel');
+  const [message, setMessage] = useState('Click the button to talk to the backend.');
   const [loading, setLoading] = useState(false);
 
-  async function generate() {
+  async function pingBackend() {
     setLoading(true);
-    setResult('');
     try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ prompt })
-      });
+      const res = await fetch(`/api/hello?name=${encodeURIComponent(name)}`, { cache: 'no-store' });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.detail || data?.error || 'Request failed');
-      setResult(data.text || '(No text returned)');
+      setMessage(data.message || 'No message returned');
     } catch (err) {
-      setResult(`Error: ${err.message}`);
+      setMessage(`Error: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -34,78 +29,88 @@ export default function HomePage() {
         margin: 0,
         padding: 'clamp(16px, 3vw, 36px)',
         boxSizing: 'border-box',
-        background: 'radial-gradient(circle at 10% 20%, #141e30 0%, #243b55 50%, #0f172a 100%)',
-        color: '#f8fafc',
-        fontFamily: 'Inter, system-ui, sans-serif',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1d4ed8 45%, #22d3ee 100%)',
+        color: '#e2e8f0',
         display: 'grid',
-        placeItems: 'center'
+        placeItems: 'center',
+        fontFamily: 'Inter, system-ui, sans-serif'
       }}
     >
       <section
         style={{
-          width: 'min(960px, 100%)',
-          border: '1px solid rgba(255,255,255,.15)',
-          borderRadius: 20,
-          background: 'rgba(255,255,255,.06)',
-          backdropFilter: 'blur(8px)',
-          padding: 'clamp(16px, 3vw, 32px)',
-          boxShadow: '0 20px 80px rgba(0,0,0,.35)'
+          width: 'min(980px, 100%)',
+          borderRadius: 24,
+          border: '1px solid rgba(255,255,255,.22)',
+          background: 'rgba(15, 23, 42, .45)',
+          backdropFilter: 'blur(10px)',
+          boxShadow: '0 24px 80px rgba(2, 6, 23, .4)',
+          padding: 'clamp(18px, 4vw, 42px)'
         }}
       >
-        <h1 style={{ margin: 0, fontSize: 'clamp(1.6rem, 4vw, 3rem)' }}>
-          Gemini 3.1 Creative Playground
-        </h1>
-        <p style={{ opacity: .9, marginTop: 10 }}>
-          100vh/100vw responsive demo: frontend talks to backend, backend calls Gemini.
-        </p>
-
-        <textarea
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          rows={5}
-          placeholder='Describe what you want Gemini to generate...'
-          style={{
-            width: '100%',
-            marginTop: 16,
-            borderRadius: 12,
-            border: '1px solid rgba(255,255,255,.25)',
-            padding: 12,
-            resize: 'vertical',
-            background: 'rgba(15,23,42,.6)',
-            color: '#fff'
-          }}
-        />
-
-        <button
-          onClick={generate}
-          disabled={loading}
-          style={{
-            marginTop: 12,
-            border: 0,
-            borderRadius: 12,
-            padding: '10px 16px',
-            fontWeight: 700,
-            cursor: 'pointer',
-            background: loading ? '#64748b' : '#22d3ee',
-            color: '#0b1220'
-          }}
-        >
-          {loading ? 'Generating...' : 'Generate with Gemini 3.1'}
-        </button>
+        <div style={{ display: 'grid', gap: 14 }}>
+          <span style={{ opacity: .85, fontSize: 14, letterSpacing: .5 }}>OPENCLAW x COOLIFY DEMO</span>
+          <h1 style={{ margin: 0, fontSize: 'clamp(1.8rem, 5vw, 3.4rem)', lineHeight: 1.08 }}>
+            Full-screen Responsive Test Page
+          </h1>
+          <p style={{ margin: 0, opacity: .92, maxWidth: 760 }}>
+            Designed with a Gemini-inspired modern style, but no runtime AI key required. The frontend talks to the backend through a server-side proxy route.
+          </p>
+        </div>
 
         <div
           style={{
-            marginTop: 18,
-            borderRadius: 12,
-            border: '1px solid rgba(255,255,255,.2)',
-            background: 'rgba(2,6,23,.7)',
-            padding: 14,
-            minHeight: 140,
-            whiteSpace: 'pre-wrap',
-            lineHeight: 1.5
+            marginTop: 24,
+            display: 'grid',
+            gap: 12,
+            gridTemplateColumns: '1fr auto'
           }}
         >
-          {result || 'Output will appear here...'}
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder='Enter your name'
+            style={{
+              width: '100%',
+              borderRadius: 12,
+              border: '1px solid rgba(255,255,255,.25)',
+              background: 'rgba(2,6,23,.55)',
+              color: '#fff',
+              padding: '12px 14px',
+              fontSize: 16,
+              outline: 'none'
+            }}
+          />
+          <button
+            onClick={pingBackend}
+            disabled={loading}
+            style={{
+              border: 0,
+              borderRadius: 12,
+              padding: '12px 18px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              background: loading ? '#94a3b8' : '#22d3ee',
+              color: '#0f172a',
+              minWidth: 150
+            }}
+          >
+            {loading ? 'Talking...' : 'Talk to backend'}
+          </button>
+        </div>
+
+        <div
+          style={{
+            marginTop: 14,
+            borderRadius: 14,
+            border: '1px solid rgba(255,255,255,.2)',
+            background: 'rgba(2,6,23,.65)',
+            padding: 14,
+            minHeight: 72,
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
+          <span style={{ fontSize: 'clamp(1rem, 2vw, 1.2rem)' }}>{message}</span>
         </div>
       </section>
     </main>
