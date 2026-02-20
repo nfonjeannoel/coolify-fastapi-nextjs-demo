@@ -3,7 +3,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const name = searchParams.get('name') || 'world';
 
-    const apiBase = process.env.API_INTERNAL_URL || 'http://demo-api:8010';
+    const apiBase = process.env.API_INTERNAL_URL || 'http://backend-api:8010';
     const upstream = `${apiBase}/hello?name=${encodeURIComponent(name)}`;
 
     const res = await fetch(upstream, { cache: 'no-store' });

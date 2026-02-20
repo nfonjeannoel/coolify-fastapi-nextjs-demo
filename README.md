@@ -28,5 +28,7 @@ Set `NEXT_PUBLIC_API_URL` for web (e.g. `http://localhost:8010`).
 
 For production-style setup, the web app calls its own Next.js API route (`/api/hello`) and that route calls the backend over the private Coolify network using `API_INTERNAL_URL` (default `http://demo-api:8010`).
 
-- In **web** app env, set: `API_INTERNAL_URL=http://demo-api:8010`
+- In **web** app env, set: `API_INTERNAL_URL=http://backend-api:8010`
 - You no longer need `NEXT_PUBLIC_API_URL` for backend access.
+
+- In Coolify, set backend app **Network Alias** to `backend-api` so app renames do not break connectivity.
