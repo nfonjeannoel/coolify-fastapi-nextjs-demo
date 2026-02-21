@@ -27,6 +27,9 @@ export default function Home() {
   const uptimeBaseRef = useRef(null);
   const uptimeOriginRef = useRef(null);
 
+  const celebrateCanvasRef = useRef(null);
+  const celebrateAnimRef = useRef(null);
+
   const [systemData, setSystemData] = useState(null);
   const [pingMs, setPingMs] = useState(null);
   const [pinging, setPinging] = useState(false);
@@ -34,6 +37,8 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [displayUptime, setDisplayUptime] = useState(null);
   const [hoverPing, setHoverPing] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
+  const [hoverCelebrate, setHoverCelebrate] = useState(false);
 
   /* ── Mount: fetch data + start terminal animation ────────────── */
   useEffect(() => {
@@ -90,6 +95,93 @@ export default function Home() {
       setPingMs(-1);
     }
     setPinging(false);
+  }
+
+  /* ── Confetti celebration ──────────────────────────────────────── */
+  function handleCelebrate() {
+    if (celebrating) return;
+    setCelebrating(true);
+
+    const canvas = celebrateCanvasRef.current;
+    if (!canvas) { setCelebrating(false); return; }
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const COLORS = ['#ffd700', '#00ffd5', '#ff2d95', '#7b61ff', '#00ff88', '#ff6b35', '#00b4ff'];
+    const SHAPES = ['rect', 'circle', 'strip'];
+    const pieces = [];
+
+    /* Spawn confetti from multiple burst points */
+    for (let burst = 0; burst < 5; burst++) {
+      const bx = canvas.width * (0.15 + Math.random() * 0.7);
+      const by = canvas.height * (0.2 + Math.random() * 0.3);
+      for (let i = 0; i < 60; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 4 + Math.random() * 10;
+        pieces.push({
+          x: bx, y: by,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 6,
+          w: 4 + Math.random() * 8,
+          h: 4 + Math.random() * 6,
+          color: COLORS[Math.floor(Math.random() * COLORS.length)],
+          shape: SHAPES[Math.floor(Math.random() * SHAPES.length)],
+          rot: Math.random() * Math.PI * 2,
+          rotV: (Math.random() - 0.5) * 0.3,
+          gravity: 0.12 + Math.random() * 0.06,
+          drag: 0.98 + Math.random() * 0.015,
+          opacity: 1,
+          fade: 0.003 + Math.random() * 0.004,
+        });
+      }
+    }
+
+    let frame = 0;
+    function animateConfetti() {
+      frame++;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      let alive = 0;
+      for (const p of pieces) {
+        if (p.opacity <= 0) continue;
+        alive++;
+        p.vy += p.gravity;
+        p.vx *= p.drag;
+        p.vy *= p.drag;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.rotV;
+        if (frame > 60) p.opacity -= p.fade;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.opacity);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+
+        if (p.shape === 'rect') {
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        } else if (p.shape === 'circle') {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillRect(-p.w / 2, -1, p.w, 2.5);
+        }
+        ctx.restore();
+      }
+
+      if (alive > 0) {
+        celebrateAnimRef.current = requestAnimationFrame(animateConfetti);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        setCelebrating(false);
+      }
+    }
+
+    cancelAnimationFrame(celebrateAnimRef.current);
+    animateConfetti();
   }
 
   /* ── Canvas star field + 3D card tilt ────────────────────────── */
@@ -249,6 +341,9 @@ export default function Home() {
       {/* Star field — fixed so it stays behind even when page scrolls */}
       <canvas ref={canvasRef} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 1 }} />
 
+      {/* Confetti overlay */}
+      <canvas ref={celebrateCanvasRef} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 999, pointerEvents: 'none' }} />
+
       {/* Central card */}
       <div ref={cardRef} style={{
         position: 'relative', zIndex: 10, width: 'min(520px, 90vw)',
@@ -355,6 +450,27 @@ export default function Home() {
             transition: 'all 0.2s ease', outline: 'none',
           }}
         >{pinging ? 'PINGING...' : '\u26A1 PING BACKEND'}</button>
+
+        {/* ── Celebrate button ─────────────────────────────────────── */}
+        <button
+          onClick={handleCelebrate}
+          disabled={celebrating}
+          onMouseEnter={() => setHoverCelebrate(true)}
+          onMouseLeave={() => setHoverCelebrate(false)}
+          style={{
+            marginTop: 10, width: '100%', padding: '12px 20px', borderRadius: 10,
+            border: '1px solid rgba(255,215,0,0.3)',
+            background: celebrating
+              ? 'rgba(255,215,0,0.2)'
+              : hoverCelebrate
+                ? 'rgba(255,215,0,0.15)'
+                : 'rgba(255,215,0,0.06)',
+            color: celebrating ? '#b8960f' : '#ffd700',
+            fontFamily: 'var(--font-mono), monospace', fontSize: 14, fontWeight: 600,
+            letterSpacing: 2, cursor: celebrating ? 'default' : 'pointer',
+            transition: 'all 0.2s ease', outline: 'none',
+          }}
+        >{celebrating ? '\uD83C\uDF89 CELEBRATING...' : '\uD83C\uDF8A CELEBRATE'}</button>
       </div>
 
       {/* Bottom hint — in document flow so it's always visible */}
