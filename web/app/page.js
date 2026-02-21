@@ -365,13 +365,27 @@ export default function Home() {
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
           }}>MISSION ACCOMPLISHED</h1>
 
-          <span style={{
-            fontSize: 11, fontWeight: 600, letterSpacing: 1.5, padding: '4px 10px', borderRadius: 6,
-            border: `1px solid ${ok ? '#00ffb4' : '#ffc800'}`,
-            color: ok ? '#00ffb4' : '#ffc800',
-            background: ok ? 'rgba(0,255,180,0.1)' : 'rgba(255,200,0,0.1)',
-            whiteSpace: 'nowrap',
-          }}>{systemData?.status?.toUpperCase() || 'CONNECTING...'}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{
+              fontSize: 11, fontWeight: 600, letterSpacing: 1.5, padding: '4px 10px', borderRadius: 6,
+              border: `1px solid ${ok ? '#00ffb4' : '#ffc800'}`,
+              color: ok ? '#00ffb4' : '#ffc800',
+              background: ok ? 'rgba(0,255,180,0.1)' : 'rgba(255,200,0,0.1)',
+              whiteSpace: 'nowrap',
+            }}>{systemData?.status?.toUpperCase() || 'CONNECTING...'}</span>
+            <a
+              href="https://github.com/nfonjeannoel/coolify-fastapi-nextjs-demo"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                fontSize: 11, fontWeight: 600, letterSpacing: 1.2,
+                padding: '4px 10px', borderRadius: 6,
+                border: '1px solid rgba(0,255,213,0.35)',
+                color: '#00ffd5', textDecoration: 'none',
+                background: 'rgba(0,255,213,0.08)', whiteSpace: 'nowrap',
+              }}
+            >GitHub</a>
+          </div>
         </div>
 
         <p style={{ margin: '8px 0 0', fontSize: 'clamp(0.8rem, 1.5vw, 0.95rem)', color: '#8892b0', letterSpacing: 0.5 }}>
