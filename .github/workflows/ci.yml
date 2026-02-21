@@ -46,6 +46,14 @@ jobs:
           assert r.status_code == 200, r.text
           assert 'Hello, CI!' in r.json().get('message', ''), r.json()
 
+          r = c.get('/system')
+          assert r.status_code == 200, r.text
+          body = r.json()
+          assert body['status'] == 'operational', body
+          assert body['version'] == '1.2.0', body
+          assert isinstance(body['uptime_seconds'], int), body
+          assert isinstance(body['stack'], list), body
+
           print('API smoke tests passed ✅')
           PY
 

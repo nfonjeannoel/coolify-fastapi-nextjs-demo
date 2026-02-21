@@ -1,118 +1,367 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-export default function HomePage() {
-  const [name, setName] = useState('Jeannoel');
-  const [message, setMessage] = useState('Click the button to talk to the backend.');
-  const [loading, setLoading] = useState(false);
+/* ── Simulated deployment log lines ─────────────────────────────── */
+const DEPLOY_LOG = [
+  '$ docker compose build --parallel',
+  '  \u2713 api: FastAPI image built (python:3.12-slim)',
+  '  \u2713 web: Next.js standalone built (node:20-alpine)',
+  '$ git push origin main',
+  '  \u2713 GitHub Actions: CI pipeline passed',
+  '$ coolify deploy --production',
+  '  \u2713 Containers pushed to VPS',
+  '  \u2713 SSL/TLS certificates provisioned',
+  '  \u2713 Health checks: all services green',
+  '',
+  '  \uD83D\uDE80 DEPLOYMENT COMPLETE \u2014 ALL SYSTEMS NOMINAL',
+];
 
-  async function pingBackend() {
-    setLoading(true);
+export default function Home() {
+  const canvasRef = useRef(null);
+  const cardRef = useRef(null);
+  const glareRef = useRef(null);
+  const particlesRef = useRef([]);
+  const mouseRef = useRef({ x: -9999, y: -9999 });
+  const animRef = useRef(null);
+  const uptimeBaseRef = useRef(null);
+  const uptimeOriginRef = useRef(null);
+
+  const [systemData, setSystemData] = useState(null);
+  const [pingMs, setPingMs] = useState(null);
+  const [pinging, setPinging] = useState(false);
+  const [visibleLogs, setVisibleLogs] = useState([]);
+  const [mounted, setMounted] = useState(false);
+  const [displayUptime, setDisplayUptime] = useState(null);
+  const [hoverPing, setHoverPing] = useState(false);
+
+  /* ── Mount: fetch data + start terminal animation ────────────── */
+  useEffect(() => {
+    setMounted(true);
+    fetchSystem();
+    const ids = DEPLOY_LOG.map((_, i) =>
+      setTimeout(() => setVisibleLogs(prev => [...prev, DEPLOY_LOG[i]]), 500 * (i + 1)),
+    );
+    return () => ids.forEach(clearTimeout);
+  }, []);
+
+  /* ── Sync uptime base whenever fresh data arrives ────────────── */
+  useEffect(() => {
+    if (systemData?.uptime_seconds != null) {
+      uptimeBaseRef.current = systemData.uptime_seconds;
+      uptimeOriginRef.current = Date.now();
+    }
+  }, [systemData?.uptime_seconds]);
+
+  /* ── Tick displayed uptime every second ──────────────────────── */
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (uptimeBaseRef.current != null) {
+        const elapsed = Math.floor((Date.now() - uptimeOriginRef.current) / 1000);
+        setDisplayUptime(uptimeBaseRef.current + elapsed);
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  async function fetchSystem() {
     try {
-      const res = await fetch(`/api/hello?name=${encodeURIComponent(name)}`, { cache: 'no-store' });
+      const t0 = performance.now();
+      const res = await fetch('/api/system', { cache: 'no-store' });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.detail || data?.error || 'Request failed');
-      setMessage(data.message || 'No message returned');
-    } catch (err) {
-      setMessage(`Error: ${err.message}`);
-    } finally {
-      setLoading(false);
+      setPingMs(Math.round(performance.now() - t0));
+      setSystemData(data);
+    } catch {
+      /* page degrades gracefully without backend */
     }
   }
 
+  async function handlePing() {
+    setPinging(true);
+    try {
+      const t0 = performance.now();
+      const res = await fetch('/api/system', { cache: 'no-store' });
+      const data = await res.json();
+      setPingMs(Math.round(performance.now() - t0));
+      setSystemData(data);
+    } catch {
+      setPingMs(-1);
+    }
+    setPinging(false);
+  }
+
+  /* ── Canvas star field + 3D card tilt ────────────────────────── */
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let w, h;
+
+    function resize() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+      initStars();
+    }
+
+    class Star {
+      constructor() {
+        this.x = Math.random() * w;
+        this.y = Math.random() * h;
+        this.vx = (Math.random() - 0.5) * 0.4;
+        this.vy = (Math.random() - 0.5) * 0.4;
+        this.r = Math.random() * 1.5 + 0.5;
+        this.baseA = Math.random() * 0.7 + 0.3;
+        this.phase = Math.random() * Math.PI * 2;
+        this.speed = Math.random() * 0.015 + 0.005;
+        this.a = this.baseA;
+      }
+      update(t) {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > w) this.vx *= -1;
+        if (this.y < 0 || this.y > h) this.vy *= -1;
+
+        const dx = mouseRef.current.x - this.x;
+        const dy = mouseRef.current.y - this.y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d > 0 && d < 130) {
+          const f = (130 - d) / 130;
+          this.vx -= (dx / d) * f * 0.12;
+          this.vy -= (dy / d) * f * 0.12;
+        }
+
+        this.vx *= 0.995;
+        this.vy *= 0.995;
+        if (Math.abs(this.vx) < 0.05) this.vx += (Math.random() - 0.5) * 0.04;
+        if (Math.abs(this.vy) < 0.05) this.vy += (Math.random() - 0.5) * 0.04;
+
+        this.a = this.baseA * (0.5 + 0.5 * Math.sin(t * this.speed + this.phase));
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(200,225,255,${this.a})`;
+        ctx.fill();
+      }
+    }
+
+    function initStars() {
+      const n = Math.min(Math.floor((w * h) / 10000), 150);
+      particlesRef.current = Array.from({ length: n }, () => new Star());
+    }
+
+    function drawConnections() {
+      const s = particlesRef.current;
+      for (let a = 0; a < s.length; a++) {
+        for (let b = a + 1; b < s.length; b++) {
+          const dx = s[a].x - s[b].x;
+          const dy = s[a].y - s[b].y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < 8100) {
+            ctx.strokeStyle = `rgba(0,255,213,${(1 - d2 / 8100) * 0.1})`;
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(s[a].x, s[a].y);
+            ctx.lineTo(s[b].x, s[b].y);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    let t = 0;
+    function loop() {
+      t++;
+      ctx.fillStyle = 'rgba(3,0,20,0.2)';
+      ctx.fillRect(0, 0, w, h);
+      for (const p of particlesRef.current) {
+        p.update(t);
+        p.draw();
+      }
+      drawConnections();
+      animRef.current = requestAnimationFrame(loop);
+    }
+
+    function onPointer(e) {
+      const cx = e.clientX ?? e.touches?.[0]?.clientX;
+      const cy = e.clientY ?? e.touches?.[0]?.clientY;
+      if (cx == null) return;
+      mouseRef.current = { x: cx, y: cy };
+
+      const card = cardRef.current;
+      if (!card) return;
+      const rect = card.getBoundingClientRect();
+      const ry = Math.max(-15, Math.min(15, ((cx - rect.left - rect.width / 2) / (rect.width / 2)) * 10));
+      const rx = Math.max(-15, Math.min(15, -((cy - rect.top - rect.height / 2) / (rect.height / 2)) * 10));
+      card.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+
+      const g = glareRef.current;
+      if (g) {
+        const gx = ((cx - rect.left) / rect.width) * 100;
+        const gy = ((cy - rect.top) / rect.height) * 100;
+        g.style.background = `radial-gradient(circle at ${gx}% ${gy}%, rgba(255,255,255,0.12) 0%, transparent 55%)`;
+      }
+    }
+
+    function onLeave() {
+      mouseRef.current = { x: -9999, y: -9999 };
+      if (cardRef.current) cardRef.current.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+      if (glareRef.current) glareRef.current.style.background = 'none';
+    }
+
+    resize();
+    loop();
+    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', onPointer);
+    window.addEventListener('touchmove', onPointer, { passive: true });
+    document.addEventListener('mouseleave', onLeave);
+    return () => {
+      cancelAnimationFrame(animRef.current);
+      window.removeEventListener('resize', resize);
+      window.removeEventListener('mousemove', onPointer);
+      window.removeEventListener('touchmove', onPointer);
+      document.removeEventListener('mouseleave', onLeave);
+    };
+  }, []);
+
+  function fmtUptime(s) {
+    if (s == null) return '---';
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    if (h > 0) return `${h}h ${m}m ${sec}s`;
+    if (m > 0) return `${m}m ${sec}s`;
+    return `${sec}s`;
+  }
+
+  const ok = systemData?.status === 'operational';
+
   return (
-    <main
-      style={{
-        width: '100vw',
-        minHeight: '100vh',
-        margin: 0,
-        padding: 'clamp(16px, 3vw, 36px)',
-        boxSizing: 'border-box',
-        background: 'linear-gradient(135deg, #0f172a 0%, #1d4ed8 45%, #22d3ee 100%)',
-        color: '#e2e8f0',
-        display: 'grid',
-        placeItems: 'center',
-        fontFamily: 'Inter, system-ui, sans-serif'
-      }}
-    >
-      <section
-        style={{
-          width: 'min(980px, 100%)',
-          borderRadius: 24,
-          border: '1px solid rgba(255,255,255,.22)',
-          background: 'rgba(15, 23, 42, .45)',
-          backdropFilter: 'blur(10px)',
-          boxShadow: '0 24px 80px rgba(2, 6, 23, .4)',
-          padding: 'clamp(18px, 4vw, 42px)'
-        }}
-      >
-        <div style={{ display: 'grid', gap: 14 }}>
-          <span style={{ opacity: .85, fontSize: 14, letterSpacing: .5 }}>OPENCLAW x COOLIFY DEMO</span>
-          <h1 style={{ margin: 0, fontSize: 'clamp(1.8rem, 5vw, 3.4rem)', lineHeight: 1.08 }}>
-            Full-screen Responsive Test Page
-          </h1>
-          <p style={{ margin: 0, opacity: .92, maxWidth: 760 }}>
-            Designed with a Gemini-inspired modern style, but no runtime AI key required. The frontend talks to the backend through a server-side proxy route.
-          </p>
+    <div style={{
+      position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden',
+      background: '#030014', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: 'var(--font-sans), system-ui, -apple-system, sans-serif', color: '#ccd6f6',
+    }}>
+      {/* Star field */}
+      <canvas ref={canvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }} />
+
+      {/* Central card */}
+      <div ref={cardRef} style={{
+        position: 'relative', zIndex: 10, width: 'min(520px, 90vw)',
+        borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)',
+        background: 'rgba(10,15,30,0.75)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
+        boxShadow: '0 0 120px rgba(0,255,213,0.07), 0 30px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)',
+        padding: 'clamp(24px, 4vw, 36px)',
+        transition: 'opacity 0.8s ease, transform 0.3s ease',
+        opacity: mounted ? 1 : 0,
+        transformStyle: 'preserve-3d', willChange: 'transform',
+      }}>
+        <div ref={glareRef} style={{ position: 'absolute', inset: 0, borderRadius: 20, pointerEvents: 'none', zIndex: 100 }} />
+
+        {/* ── Header ─────────────────────────────────────────────── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+          <h1 style={{
+            margin: 0, fontSize: 'clamp(1.2rem, 3vw, 1.6rem)', fontWeight: 700, letterSpacing: 2,
+            background: 'linear-gradient(135deg, #fff 0%, #00ffd5 100%)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          }}>MISSION ACCOMPLISHED</h1>
+
+          <span style={{
+            fontSize: 11, fontWeight: 600, letterSpacing: 1.5, padding: '4px 10px', borderRadius: 6,
+            border: `1px solid ${ok ? '#00ffb4' : '#ffc800'}`,
+            color: ok ? '#00ffb4' : '#ffc800',
+            background: ok ? 'rgba(0,255,180,0.1)' : 'rgba(255,200,0,0.1)',
+            whiteSpace: 'nowrap',
+          }}>{systemData?.status?.toUpperCase() || 'CONNECTING...'}</span>
         </div>
 
-        <div
-          style={{
-            marginTop: 24,
-            display: 'grid',
-            gap: 12,
-            gridTemplateColumns: '1fr auto'
-          }}
-        >
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder='Enter your name'
-            style={{
-              width: '100%',
-              borderRadius: 12,
-              border: '1px solid rgba(255,255,255,.25)',
-              background: 'rgba(2,6,23,.55)',
-              color: '#fff',
-              padding: '12px 14px',
-              fontSize: 16,
-              outline: 'none'
-            }}
-          />
-          <button
-            onClick={pingBackend}
-            disabled={loading}
-            style={{
-              border: 0,
-              borderRadius: 12,
-              padding: '12px 18px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              background: loading ? '#94a3b8' : '#22d3ee',
-              color: '#0f172a',
-              minWidth: 150
-            }}
-          >
-            {loading ? 'Talking...' : 'Talk to backend'}
-          </button>
+        <p style={{ margin: '8px 0 0', fontSize: 'clamp(0.8rem, 1.5vw, 0.95rem)', color: '#8892b0', letterSpacing: 0.5 }}>
+          Coolify &times; VPS &times; CI/CD Pipeline
+        </p>
+
+        {/* ── Divider ────────────────────────────────────────────── */}
+        <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(0,255,213,0.3), transparent)', margin: '18px 0' }} />
+
+        {/* ── Stats grid ─────────────────────────────────────────── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 12 }}>
+          {[
+            { l: 'UPTIME', v: fmtUptime(displayUptime) },
+            { l: 'LATENCY', v: pingMs != null ? (pingMs < 0 ? 'ERR' : `${pingMs}ms`) : '---' },
+            { l: 'VERSION', v: systemData?.version || '---' },
+            { l: 'PYTHON', v: systemData?.python_version || '---' },
+          ].map(({ l, v }) => (
+            <div key={l} style={{
+              background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 12px',
+              border: '1px solid rgba(255,255,255,0.05)',
+            }}>
+              <div style={{
+                fontFamily: 'var(--font-mono), monospace', fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+                fontWeight: 600, color: '#e6f1ff',
+              }}>{v}</div>
+              <div style={{ fontSize: 10, letterSpacing: 1.5, color: '#5a6a8a', marginTop: 2 }}>{l}</div>
+            </div>
+          ))}
         </div>
 
-        <div
-          style={{
-            marginTop: 14,
-            borderRadius: 14,
-            border: '1px solid rgba(255,255,255,.2)',
-            background: 'rgba(2,6,23,.65)',
-            padding: 14,
-            minHeight: 72,
-            display: 'flex',
-            alignItems: 'center'
-          }}
-        >
-          <span style={{ fontSize: 'clamp(1rem, 2vw, 1.2rem)' }}>{message}</span>
+        {/* ── Stack badges ───────────────────────────────────────── */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
+          {(systemData?.stack || ['FastAPI', 'Next.js', 'Docker', 'Coolify', 'GitHub Actions']).map(tech => (
+            <span key={tech} style={{
+              fontSize: 11, padding: '4px 10px', borderRadius: 20,
+              background: 'rgba(0,255,213,0.08)', color: '#00ffd5',
+              border: '1px solid rgba(0,255,213,0.15)', letterSpacing: 0.5,
+            }}>{tech}</span>
+          ))}
         </div>
-      </section>
-    </main>
+
+        {/* ── Terminal ───────────────────────────────────────────── */}
+        <div style={{
+          marginTop: 18, background: 'rgba(0,0,0,0.4)', borderRadius: 10,
+          padding: '14px 16px', border: '1px solid rgba(255,255,255,0.04)',
+          fontFamily: 'var(--font-mono), monospace',
+          fontSize: 'clamp(0.65rem, 1.2vw, 0.78rem)', lineHeight: 1.7,
+          maxHeight: 'clamp(120px, 22vh, 220px)', overflowY: 'auto',
+        }}>
+          {visibleLogs.map((line, i) => (
+            <div key={i} style={{
+              color: line.includes('\u2713') ? '#00ffb4'
+                : line.includes('\uD83D\uDE80') ? '#ffd700'
+                : line.startsWith('$') ? '#ccd6f6'
+                : '#5a6a8a',
+            }}>{line || '\u00A0'}</div>
+          ))}
+          {visibleLogs.length < DEPLOY_LOG.length && (
+            <span style={{ color: '#00ffd5', animation: 'blink 1s step-end infinite' }}>{'\u2588'}</span>
+          )}
+        </div>
+
+        {/* ── Ping button ────────────────────────────────────────── */}
+        <button
+          onClick={handlePing}
+          disabled={pinging}
+          onMouseEnter={() => setHoverPing(true)}
+          onMouseLeave={() => setHoverPing(false)}
+          style={{
+            marginTop: 18, width: '100%', padding: '12px 20px', borderRadius: 10,
+            border: '1px solid rgba(0,255,213,0.3)',
+            background: hoverPing && !pinging ? 'rgba(0,255,213,0.15)' : 'rgba(0,255,213,0.06)',
+            color: pinging ? '#5a6a8a' : '#00ffd5',
+            fontFamily: 'var(--font-mono), monospace', fontSize: 14, fontWeight: 600,
+            letterSpacing: 2, cursor: pinging ? 'wait' : 'pointer',
+            transition: 'all 0.2s ease', outline: 'none',
+          }}
+        >{pinging ? 'PINGING...' : '\u26A1 PING BACKEND'}</button>
+      </div>
+
+      {/* Bottom hint */}
+      <div style={{
+        position: 'absolute', bottom: 30, left: '50%', transform: 'translateX(-50%)',
+        fontFamily: 'var(--font-mono), monospace', fontSize: 12,
+        color: 'rgba(255,255,255,0.25)', letterSpacing: 2, zIndex: 10, pointerEvents: 'none',
+        textAlign: 'center', width: '90%',
+      }}>[ MOVE CURSOR TO INTERACT ]</div>
+
+      <style>{`@keyframes blink { 50% { opacity: 0 } }`}</style>
+    </div>
   );
 }
