@@ -238,12 +238,14 @@ export default function Home() {
 
   return (
     <div style={{
-      position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden',
-      background: '#030014', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      position: 'relative', width: '100vw', minHeight: '100dvh',
+      background: '#030014', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      padding: '30px 0', boxSizing: 'border-box', overflowX: 'hidden',
       fontFamily: 'var(--font-sans), system-ui, -apple-system, sans-serif', color: '#ccd6f6',
     }}>
-      {/* Star field */}
-      <canvas ref={canvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }} />
+      {/* Star field — fixed so it stays behind even when page scrolls */}
+      <canvas ref={canvasRef} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 1 }} />
 
       {/* Central card */}
       <div ref={cardRef} style={{
@@ -283,7 +285,7 @@ export default function Home() {
         <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(0,255,213,0.3), transparent)', margin: '18px 0' }} />
 
         {/* ── Stats grid ─────────────────────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
           {[
             { l: 'UPTIME', v: fmtUptime(displayUptime) },
             { l: 'LATENCY', v: pingMs != null ? (pingMs < 0 ? 'ERR' : `${pingMs}ms`) : '---' },
@@ -353,12 +355,12 @@ export default function Home() {
         >{pinging ? 'PINGING...' : '\u26A1 PING BACKEND'}</button>
       </div>
 
-      {/* Bottom hint */}
+      {/* Bottom hint — in document flow so it's always visible */}
       <div style={{
-        position: 'absolute', bottom: 30, left: '50%', transform: 'translateX(-50%)',
+        marginTop: 20, flexShrink: 0,
         fontFamily: 'var(--font-mono), monospace', fontSize: 12,
-        color: 'rgba(255,255,255,0.25)', letterSpacing: 2, zIndex: 10, pointerEvents: 'none',
-        textAlign: 'center', width: '90%',
+        color: 'rgba(255,255,255,0.25)', letterSpacing: 2, zIndex: 10,
+        textAlign: 'center',
       }}>[ MOVE CURSOR TO INTERACT ]</div>
 
       <style>{`@keyframes blink { 50% { opacity: 0 } }`}</style>
