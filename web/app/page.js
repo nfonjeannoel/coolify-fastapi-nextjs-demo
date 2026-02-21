@@ -17,6 +17,74 @@ const DEPLOY_LOG = [
   '  \uD83D\uDE80 DEPLOYMENT COMPLETE \u2014 ALL SYSTEMS NOMINAL',
 ];
 
+/* ── Hacker terminal sequences ─────────────────────────────────── */
+const HACKER_LINES = [
+  { text: '> INITIATING SECURE HANDSHAKE PROTOCOL...', color: '#00ffd5', delay: 0 },
+  { text: '[SYS] Loading cryptographic modules...', color: '#5a6a8a', delay: 80 },
+  { text: '[SYS] AES-256-GCM cipher suite initialized', color: '#5a6a8a', delay: 120 },
+  { text: '[SYS] RSA-4096 key pair verified', color: '#5a6a8a', delay: 160 },
+  { text: '\u2588\u2588 ESTABLISHING ENCRYPTED TUNNEL \u2588\u2588', color: '#ff2d55', delay: 300 },
+  { text: '  > TLS 1.3 handshake ............... OK', color: '#00ffb4', delay: 500 },
+  { text: '  > Certificate chain validated ..... OK', color: '#00ffb4', delay: 600 },
+  { text: '  > HSTS policy enforced ............ OK', color: '#00ffb4', delay: 700 },
+  { text: '[NET] Resolving target: api.backend.internal', color: '#ffd700', delay: 900 },
+  { text: '[NET] Route: client -> edge-proxy -> origin', color: '#5a6a8a', delay: 1000 },
+  { text: '[NET] DNS TTL: 300s | Protocol: HTTP/2', color: '#5a6a8a', delay: 1050 },
+  { text: '$ traceroute --tcp -p 443 backend-node-01', color: '#ccd6f6', delay: 1200 },
+  { text: '  1  gateway.local      0.4ms', color: '#5a6a8a', delay: 1300 },
+  { text: '  2  edge-cdn.proxy     2.1ms', color: '#5a6a8a', delay: 1380 },
+  { text: '  3  dc-switch-01.fra   8.7ms', color: '#5a6a8a', delay: 1460 },
+  { text: '  4  backend-node-01   12.3ms', color: '#00ffb4', delay: 1540 },
+  { text: '[AUTH] Bearer token: eyJhbG...REDACTED', color: '#ff6b35', delay: 1700 },
+  { text: '[AUTH] Scope: system:read | Exp: 3600s', color: '#5a6a8a', delay: 1800 },
+  { text: '\u2588\u2588 EXECUTING RECON PAYLOAD \u2588\u2588', color: '#ff2d55', delay: 2000 },
+  { text: '$ curl -sS -X GET /api/system --compressed', color: '#ccd6f6', delay: 2100 },
+  { text: '[HTTP] > GET /api/system HTTP/2', color: '#5a6a8a', delay: 2200 },
+  { text: '[HTTP] > Host: backend-node-01.internal', color: '#5a6a8a', delay: 2250 },
+  { text: '[HTTP] > Authorization: Bearer ****', color: '#5a6a8a', delay: 2300 },
+  { text: '[HTTP] > Accept: application/json', color: '#5a6a8a', delay: 2350 },
+  { text: '[SYS] Scanning process table...', color: '#ffd700', delay: 2500 },
+  { text: '  PID  2847  uvicorn    main:app   0.2% CPU  48MB RSS', color: '#5a6a8a', delay: 2600 },
+  { text: '  PID  2848  gunicorn   worker-1   0.1% CPU  32MB RSS', color: '#5a6a8a', delay: 2660 },
+  { text: '  PID  2901  postgres   idle       0.0% CPU 128MB RSS', color: '#5a6a8a', delay: 2720 },
+  { text: '  PID  3012  redis-srv  cache      0.0% CPU  16MB RSS', color: '#5a6a8a', delay: 2780 },
+  { text: '[SYS] Reading /proc/meminfo...', color: '#ffd700', delay: 2900 },
+  { text: '  MemTotal:  8167492 kB | MemFree: 4201836 kB', color: '#5a6a8a', delay: 3000 },
+  { text: '  SwapTotal: 2097148 kB | SwapFree: 2097148 kB', color: '#5a6a8a', delay: 3060 },
+  { text: '[NET] Checking open ports on target...', color: '#ffd700', delay: 3200 },
+  { text: '  PORT   STATE    SERVICE', color: '#7b61ff', delay: 3300 },
+  { text: '  22     open     ssh', color: '#5a6a8a', delay: 3350 },
+  { text: '  80     open     http     -> 301 redirect', color: '#5a6a8a', delay: 3400 },
+  { text: '  443    open     https    -> FastAPI v0.115', color: '#00ffb4', delay: 3450 },
+  { text: '  5432   filtered postgres -> internal only', color: '#5a6a8a', delay: 3500 },
+  { text: '  6379   filtered redis    -> internal only', color: '#5a6a8a', delay: 3550 },
+  { text: '[HTTP] < 200 OK (application/json)', color: '#00ffb4', delay: 3700 },
+  { text: '[HTTP] < Content-Length: 247', color: '#5a6a8a', delay: 3750 },
+  { text: '[HTTP] < X-Request-ID: a7f2c...e91b', color: '#5a6a8a', delay: 3800 },
+  { text: '\u2588\u2588 DECODING RESPONSE PAYLOAD \u2588\u2588', color: '#ff2d55', delay: 3950 },
+  { text: '  > Parsing JSON response body...', color: '#5a6a8a', delay: 4050 },
+  { text: '  > Validating response schema...', color: '#5a6a8a', delay: 4150 },
+  { text: '  > Integrity check: SHA256 match \u2713', color: '#00ffb4', delay: 4250 },
+  { text: '[SYS] Wiping session artifacts...', color: '#ffd700', delay: 4400 },
+  { text: '  > Temp keys destroyed', color: '#5a6a8a', delay: 4500 },
+  { text: '  > Connection pool released', color: '#5a6a8a', delay: 4560 },
+  { text: '  > Audit log entry written', color: '#5a6a8a', delay: 4620 },
+  { text: '', color: '#5a6a8a', delay: 4750 },
+];
+
+/* ── Random hex/binary noise for background fill ───────────────── */
+function randomHex(len) {
+  return Array.from({ length: len }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+}
+function randomNoiseLine() {
+  const types = [
+    () => `0x${randomHex(8)}  ${randomHex(4)} ${randomHex(4)} ${randomHex(4)} ${randomHex(4)}  |${Array.from({ length: 16 }, () => String.fromCharCode(33 + Math.floor(Math.random() * 93))).join('')}|`,
+    () => `[${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}] ${['recv', 'send', 'proc', 'kern', 'auth', 'netf'][Math.floor(Math.random() * 6)]}: ${randomHex(12)}`,
+    () => `  ${randomHex(2)} ${randomHex(2)} ${randomHex(2)} ${randomHex(2)} ${randomHex(2)} ${randomHex(2)} ${randomHex(2)} ${randomHex(2)}  ${randomHex(2)} ${randomHex(2)} ${randomHex(2)} ${randomHex(2)} ${randomHex(2)} ${randomHex(2)} ${randomHex(2)} ${randomHex(2)}`,
+  ];
+  return types[Math.floor(Math.random() * types.length)]();
+}
+
 export default function Home() {
   const canvasRef = useRef(null);
   const cardRef = useRef(null);
@@ -39,6 +107,12 @@ export default function Home() {
   const [hoverPing, setHoverPing] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
   const [hoverCelebrate, setHoverCelebrate] = useState(false);
+  const [hackingActive, setHackingActive] = useState(false);
+  const [hackerLines, setHackerLines] = useState([]);
+  const hackerTimersRef = useRef([]);
+  const hackerTermRef = useRef(null);
+  const noiseIntervalRef = useRef(null);
+  const termScrollRef = useRef(null);
 
   /* ── Mount: fetch data + start terminal animation ────────────── */
   useEffect(() => {
@@ -49,6 +123,13 @@ export default function Home() {
     );
     return () => ids.forEach(clearTimeout);
   }, []);
+
+  /* ── Auto-scroll hacker terminal ────────────────────────────── */
+  useEffect(() => {
+    if (termScrollRef.current) {
+      termScrollRef.current.scrollTop = termScrollRef.current.scrollHeight;
+    }
+  }, [hackerLines]);
 
   /* ── Sync uptime base whenever fresh data arrives ────────────── */
   useEffect(() => {
@@ -83,18 +164,91 @@ export default function Home() {
   }
 
   async function handlePing() {
+    if (hackingActive) return;
     setPinging(true);
-    try {
-      const t0 = performance.now();
-      const res = await fetch('/api/system', { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      setPingMs(Math.round(performance.now() - t0));
-      setSystemData(data);
-    } catch {
-      setPingMs(-1);
+    setHackingActive(true);
+    setHackerLines([]);
+
+    // Clear any previous timers
+    hackerTimersRef.current.forEach(clearTimeout);
+    hackerTimersRef.current = [];
+    clearInterval(noiseIntervalRef.current);
+
+    // Start the actual fetch in background
+    let fetchResult = null;
+    const fetchPromise = (async () => {
+      try {
+        const t0 = performance.now();
+        const res = await fetch('/api/system', { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        fetchResult = { ms: Math.round(performance.now() - t0), data };
+      } catch {
+        fetchResult = { ms: -1, data: null };
+      }
+    })();
+
+    // Rapid noise lines running in background (the fast scrolling hex/binary)
+    let noiseCount = 0;
+    noiseIntervalRef.current = setInterval(() => {
+      noiseCount++;
+      if (noiseCount < 120) { // ~6 seconds of noise at 20/sec
+        setHackerLines(prev => {
+          const next = [...prev, { text: randomNoiseLine(), color: 'rgba(0,255,213,0.15)', isNoise: true }];
+          // Keep max ~60 visible lines to prevent lag
+          if (next.length > 60) return next.slice(next.length - 60);
+          return next;
+        });
+      }
+    }, 50);
+
+    // Schedule the meaningful hacker log lines
+    for (const line of HACKER_LINES) {
+      const id = setTimeout(() => {
+        setHackerLines(prev => {
+          const next = [...prev, { text: line.text, color: line.color, isNoise: false }];
+          if (next.length > 60) return next.slice(next.length - 60);
+          return next;
+        });
+      }, line.delay);
+      hackerTimersRef.current.push(id);
     }
-    setPinging(false);
+
+    // Final result after ~5 seconds
+    const finishId = setTimeout(async () => {
+      clearInterval(noiseIntervalRef.current);
+      await fetchPromise;
+
+      const ms = fetchResult?.ms ?? -1;
+      const ok = ms > 0;
+      const finalLines = [
+        { text: '\u2588\u2588 OPERATION COMPLETE \u2588\u2588', color: '#ff2d55', isNoise: false },
+        { text: '', color: '#5a6a8a', isNoise: false },
+        { text: ok
+          ? `  \u2713 BACKEND ALIVE  |  RTT: ${ms}ms  |  STATUS: NOMINAL`
+          : '  \u2717 CONNECTION FAILED  |  TARGET UNREACHABLE',
+          color: ok ? '#00ffd5' : '#ff2d55', isNoise: false },
+        { text: ok ? '  \u2713 ALL SYSTEMS OPERATIONAL' : '  \u2717 SYSTEM DEGRADED', color: ok ? '#00ffb4' : '#ffd700', isNoise: false },
+      ];
+
+      setHackerLines(prev => {
+        // Remove noise, keep meaningful lines + add finals
+        const meaningful = prev.filter(l => !l.isNoise).slice(-20);
+        return [...meaningful, ...finalLines];
+      });
+
+      if (fetchResult?.data) {
+        setPingMs(fetchResult.ms);
+        setSystemData(fetchResult.data);
+      } else {
+        setPingMs(-1);
+      }
+
+      setPinging(false);
+      // Keep terminal visible for a moment, then allow reset
+      setTimeout(() => setHackingActive(false), 2000);
+    }, 5000);
+    hackerTimersRef.current.push(finishId);
   }
 
   /* ── Confetti celebration ──────────────────────────────────────── */
@@ -428,42 +582,129 @@ export default function Home() {
         </div>
 
         {/* ── Terminal ───────────────────────────────────────────── */}
-        <div style={{
-          marginTop: 18, background: 'rgba(0,0,0,0.4)', borderRadius: 10,
-          padding: '14px 16px', border: '1px solid rgba(255,255,255,0.04)',
-          fontFamily: 'var(--font-mono), monospace',
-          fontSize: 'clamp(0.65rem, 1.2vw, 0.78rem)', lineHeight: 1.7,
-          maxHeight: 'clamp(120px, 22vh, 220px)', overflowY: 'auto',
-        }}>
-          {visibleLogs.map((line, i) => (
-            <div key={i} style={{
-              color: line.includes('\u2713') ? '#00ffb4'
-                : line.includes('\uD83D\uDE80') ? '#ffd700'
-                : line.startsWith('$') ? '#ccd6f6'
-                : '#5a6a8a',
-            }}>{line || '\u00A0'}</div>
-          ))}
-          {visibleLogs.length < DEPLOY_LOG.length && (
-            <span style={{ color: '#00ffd5', animation: 'blink 1s step-end infinite' }}>{'\u2588'}</span>
+        <div
+          ref={hackerTermRef}
+          style={{
+            marginTop: 18, borderRadius: 10,
+            padding: 0,
+            border: hackingActive
+              ? '1px solid rgba(0,255,213,0.4)'
+              : '1px solid rgba(255,255,255,0.04)',
+            fontFamily: 'var(--font-mono), monospace',
+            fontSize: 'clamp(0.6rem, 1.1vw, 0.72rem)', lineHeight: 1.6,
+            overflow: 'hidden', position: 'relative',
+            background: hackingActive ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.4)',
+            boxShadow: hackingActive
+              ? '0 0 30px rgba(0,255,213,0.15), inset 0 0 60px rgba(0,255,213,0.03)'
+              : 'none',
+            transition: 'all 0.3s ease',
+          }}
+        >
+          {/* Hacker mode header bar */}
+          {hackingActive && (
+            <div style={{
+              padding: '6px 12px',
+              background: 'linear-gradient(90deg, rgba(0,255,213,0.15), rgba(255,45,85,0.1), rgba(0,255,213,0.15))',
+              borderBottom: '1px solid rgba(0,255,213,0.2)',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              fontSize: 10, letterSpacing: 1.5,
+            }}>
+              <span style={{ color: '#ff2d55' }}>{'\u25CF'} LIVE</span>
+              <span style={{ color: '#00ffd5' }}>SECURE CHANNEL // ENCRYPTED</span>
+              <span style={{ color: '#ffd700' }}>PID {Math.floor(Math.random() * 9000) + 1000}</span>
+            </div>
+          )}
+
+          {/* Scanline overlay during hacking */}
+          {hackingActive && (
+            <div style={{
+              position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5,
+              background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,213,0.03) 2px, rgba(0,255,213,0.03) 4px)',
+              animation: 'scanlines 0.1s linear infinite',
+            }} />
+          )}
+
+          {/* CRT flicker overlay */}
+          {hackingActive && (
+            <div style={{
+              position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 6,
+              animation: 'crtFlicker 3s ease-in-out infinite',
+              background: 'transparent',
+            }} />
+          )}
+
+          {/* Terminal content */}
+          <div ref={termScrollRef} style={{
+            padding: '10px 14px',
+            maxHeight: hackingActive ? 'clamp(180px, 30vh, 300px)' : 'clamp(120px, 22vh, 220px)',
+            overflowY: 'auto', position: 'relative', zIndex: 2,
+            transition: 'max-height 0.3s ease',
+          }}>
+            {/* Normal deploy logs (shown when NOT hacking) */}
+            {!hackingActive && visibleLogs.map((line, i) => (
+              <div key={`log-${i}`} style={{
+                color: line.includes('\u2713') ? '#00ffb4'
+                  : line.includes('\uD83D\uDE80') ? '#ffd700'
+                  : line.startsWith('$') ? '#ccd6f6'
+                  : '#5a6a8a',
+              }}>{line || '\u00A0'}</div>
+            ))}
+            {!hackingActive && visibleLogs.length < DEPLOY_LOG.length && (
+              <span style={{ color: '#00ffd5', animation: 'blink 1s step-end infinite' }}>{'\u2588'}</span>
+            )}
+
+            {/* Hacker lines (shown when hacking) */}
+            {hackingActive && hackerLines.map((line, i) => (
+              <div key={`hack-${i}`} style={{
+                color: line.color,
+                opacity: line.isNoise ? 0.4 : 1,
+                fontWeight: line.text.includes('\u2588\u2588') ? 700 : 400,
+                textShadow: line.text.includes('\u2588\u2588')
+                  ? '0 0 8px rgba(255,45,85,0.6)'
+                  : line.isNoise ? 'none'
+                  : '0 0 4px rgba(0,255,213,0.3)',
+                letterSpacing: line.isNoise ? 1.5 : 0.5,
+                fontSize: line.isNoise ? '0.6em' : 'inherit',
+              }}>{line.text || '\u00A0'}</div>
+            ))}
+            {hackingActive && pinging && (
+              <span style={{ color: '#00ffd5', animation: 'blink 0.5s step-end infinite', textShadow: '0 0 8px rgba(0,255,213,0.8)' }}>{'\u2588'}</span>
+            )}
+          </div>
+
+          {/* Bottom glow bar during hacking */}
+          {hackingActive && pinging && (
+            <div style={{
+              height: 2,
+              background: 'linear-gradient(90deg, transparent, #00ffd5, #ff2d55, #00ffd5, transparent)',
+              animation: 'glowSlide 1.5s ease-in-out infinite',
+            }} />
           )}
         </div>
 
         {/* ── Ping button ────────────────────────────────────────── */}
         <button
           onClick={handlePing}
-          disabled={pinging}
+          disabled={pinging || hackingActive}
           onMouseEnter={() => setHoverPing(true)}
           onMouseLeave={() => setHoverPing(false)}
           style={{
             marginTop: 18, width: '100%', padding: '12px 20px', borderRadius: 10,
-            border: '1px solid rgba(0,255,213,0.3)',
-            background: hoverPing && !pinging ? 'rgba(0,255,213,0.15)' : 'rgba(0,255,213,0.06)',
-            color: pinging ? '#5a6a8a' : '#00ffd5',
+            border: hackingActive
+              ? '1px solid rgba(255,45,85,0.5)'
+              : '1px solid rgba(0,255,213,0.3)',
+            background: hackingActive
+              ? 'rgba(255,45,85,0.1)'
+              : hoverPing && !pinging ? 'rgba(0,255,213,0.15)' : 'rgba(0,255,213,0.06)',
+            color: hackingActive ? '#ff2d55' : pinging ? '#5a6a8a' : '#00ffd5',
             fontFamily: 'var(--font-mono), monospace', fontSize: 14, fontWeight: 600,
-            letterSpacing: 2, cursor: pinging ? 'wait' : 'pointer',
+            letterSpacing: 2,
+            cursor: pinging || hackingActive ? 'wait' : 'pointer',
             transition: 'all 0.2s ease', outline: 'none',
+            textShadow: hackingActive ? '0 0 10px rgba(255,45,85,0.5)' : 'none',
+            animation: hackingActive ? 'blink 1s step-end infinite' : 'none',
           }}
-        >{pinging ? 'PINGING...' : '\u26A1 PING BACKEND'}</button>
+        >{hackingActive ? '[ INTERCEPTING SIGNAL... ]' : '\u26A1 PING BACKEND'}</button>
 
         {/* ── Celebrate button ─────────────────────────────────────── */}
         <button
@@ -495,7 +736,26 @@ export default function Home() {
         textAlign: 'center',
       }}>[ MOVE CURSOR TO INTERACT ]</div>
 
-      <style>{`@keyframes blink { 50% { opacity: 0 } }`}</style>
+      <style>{`
+        @keyframes blink { 50% { opacity: 0 } }
+        @keyframes scanlines {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(4px); }
+        }
+        @keyframes crtFlicker {
+          0%, 100% { opacity: 0; }
+          5% { opacity: 0.05; background: rgba(0,255,213,0.03); }
+          10% { opacity: 0; }
+          50% { opacity: 0; }
+          52% { opacity: 0.08; background: rgba(255,45,85,0.02); }
+          54% { opacity: 0; }
+        }
+        @keyframes glowSlide {
+          0% { opacity: 0.3; transform: translateX(-100%); }
+          50% { opacity: 1; transform: translateX(0); }
+          100% { opacity: 0.3; transform: translateX(100%); }
+        }
+      `}</style>
     </div>
   );
 }
