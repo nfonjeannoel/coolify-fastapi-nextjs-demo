@@ -68,6 +68,7 @@ export default function Home() {
     try {
       const t0 = performance.now();
       const res = await fetch('/api/system', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setPingMs(Math.round(performance.now() - t0));
       setSystemData(data);
@@ -81,6 +82,7 @@ export default function Home() {
     try {
       const t0 = performance.now();
       const res = await fetch('/api/system', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setPingMs(Math.round(performance.now() - t0));
       setSystemData(data);
