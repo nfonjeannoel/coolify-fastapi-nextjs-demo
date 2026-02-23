@@ -86,11 +86,20 @@ jobs:
     needs: [api, web]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
-      - name: Trigger Coolify deployment
+      - name: Deploy API (FastAPI)
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" --request GET '${{ secrets.COOLIFY_WEBHOOK }}' --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}')
-          echo "Coolify responded with HTTP $response"
+          response=$(curl -s -o /dev/null -w "%{http_code}" --request GET '${{ secrets.COOLIFY_WEBHOOK_API }}' --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}')
+          echo "API deploy: HTTP $response"
           if [ "$response" != "200" ]; then
-            echo "Deployment trigger failed!"
+            echo "API deployment trigger failed!"
+            exit 1
+          fi
+
+      - name: Deploy Web (Next.js)
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" --request GET '${{ secrets.COOLIFY_WEBHOOK_WEB }}' --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}')
+          echo "Web deploy: HTTP $response"
+          if [ "$response" != "200" ]; then
+            echo "Web deployment trigger failed!"
             exit 1
           fi
