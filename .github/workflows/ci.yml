@@ -6,8 +6,32 @@ on:
   pull_request:
 
 jobs:
+  # ── Step 1: Detect which folders changed ──────────────────────
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      web: ${{ steps.filter.outputs.web }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'api/**'
+            web:
+              - 'web/**'
+
+  # ── Step 2a: Run API tests only if api/ changed ───────────────
   api:
     name: API checks (FastAPI)
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -57,8 +81,11 @@ jobs:
           print('API smoke tests passed ✅')
           PY
 
+  # ── Step 2b: Run web tests only if web/ changed ──────────────
   web:
     name: Web checks (Next.js)
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -80,13 +107,19 @@ jobs:
       - name: Build
         run: npm run build
 
-  deploy:
-    name: Deploy to Coolify
+  # ── Step 3a: Deploy API if api/ changed and tests passed ─────
+  deploy-api:
+    name: Deploy API to Coolify
     runs-on: ubuntu-latest
-    needs: [api, web]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [changes, api]
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' &&
+      needs.changes.outputs.api == 'true' &&
+      needs.api.result == 'success'
     steps:
-      - name: Deploy API (FastAPI)
+      - name: Trigger API deployment
         run: |
           response=$(curl -s -o /dev/null -w "%{http_code}" --request GET '${{ secrets.COOLIFY_WEBHOOK_API }}' --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}')
           echo "API deploy: HTTP $response"
@@ -95,7 +128,19 @@ jobs:
             exit 1
           fi
 
-      - name: Deploy Web (Next.js)
+  # ── Step 3b: Deploy web if web/ changed and tests passed ─────
+  deploy-web:
+    name: Deploy Web to Coolify
+    runs-on: ubuntu-latest
+    needs: [changes, web]
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' &&
+      needs.changes.outputs.web == 'true' &&
+      needs.web.result == 'success'
+    steps:
+      - name: Trigger Web deployment
         run: |
           response=$(curl -s -o /dev/null -w "%{http_code}" --request GET '${{ secrets.COOLIFY_WEBHOOK_WEB }}' --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}')
           echo "Web deploy: HTTP $response"
