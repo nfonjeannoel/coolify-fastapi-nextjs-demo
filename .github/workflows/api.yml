@@ -1,0 +1,75 @@
+name: API
+
+on:
+  push:
+    branches: [main]
+    paths: [api/**]
+  pull_request:
+    paths: [api/**]
+
+jobs:
+  test:
+    name: API checks (FastAPI)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install httpx
+
+      - name: Syntax check
+        run: python -m py_compile main.py
+
+      - name: Smoke test endpoints
+        run: |
+          python - << 'PY'
+          from main import app
+          from fastapi.testclient import TestClient
+
+          c = TestClient(app)
+
+          r = c.get('/health')
+          assert r.status_code == 200, r.text
+          assert r.json().get('status') == 'ok', r.json()
+
+          r = c.get('/hello', params={'name': 'CI'})
+          assert r.status_code == 200, r.text
+          assert 'Hello, CI!' in r.json().get('message', ''), r.json()
+
+          r = c.get('/system')
+          assert r.status_code == 200, r.text
+          body = r.json()
+          assert body['status'] == 'operational', body
+          assert body['version'] == '1.2.0', body
+          assert isinstance(body['uptime_seconds'], int), body
+          assert isinstance(body['stack'], list), body
+
+          print('API smoke tests passed ✅')
+          PY
+
+  deploy:
+    name: Deploy API to Coolify
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Trigger API deployment
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" --request GET '${{ secrets.COOLIFY_WEBHOOK_API }}' --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}')
+          echo "API deploy: HTTP $response"
+          if [ "$response" != "200" ]; then
+            echo "API deployment trigger failed!"
+            exit 1
+          fi

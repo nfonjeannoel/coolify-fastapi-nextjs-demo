@@ -1,0 +1,47 @@
+name: Web
+
+on:
+  push:
+    branches: [main]
+    paths: [web/**]
+  pull_request:
+    paths: [web/**]
+
+jobs:
+  test:
+    name: Web checks (Next.js)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+  deploy:
+    name: Deploy Web to Coolify
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Trigger Web deployment
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" --request GET '${{ secrets.COOLIFY_WEBHOOK_WEB }}' --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}')
+          echo "Web deploy: HTTP $response"
+          if [ "$response" != "200" ]; then
+            echo "Web deployment trigger failed!"
+            exit 1
+          fi
