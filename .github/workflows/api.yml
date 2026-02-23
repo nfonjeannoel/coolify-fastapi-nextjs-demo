@@ -5,34 +5,57 @@ on:
     branches: [main]
     paths: [api/**]
   pull_request:
-    paths: [api/**]
 
 jobs:
+  changes:
+    name: Detect API changes
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'api/**'
+
   test:
     name: API checks (FastAPI)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: api
+    needs: changes
     steps:
+      - name: Skip — no API changes
+        if: needs.changes.outputs.api != 'true'
+        run: echo "No API files changed — skipping tests ✅"
+
       - name: Checkout
+        if: needs.changes.outputs.api == 'true'
         uses: actions/checkout@v4
 
       - name: Set up Python
+        if: needs.changes.outputs.api == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: Install dependencies
+        if: needs.changes.outputs.api == 'true'
+        working-directory: api
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install httpx
 
       - name: Syntax check
+        if: needs.changes.outputs.api == 'true'
+        working-directory: api
         run: python -m py_compile main.py
 
       - name: Smoke test endpoints
+        if: needs.changes.outputs.api == 'true'
+        working-directory: api
         run: |
           python - << 'PY'
           from main import app
