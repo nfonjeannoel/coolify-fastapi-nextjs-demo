@@ -486,10 +486,10 @@ export default function Home() {
 
   return (
     <div style={{
-      position: 'relative', width: '100vw', minHeight: '100dvh',
+      position: 'relative', width: '100vw', height: '100dvh',
       background: '#030014', display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      padding: '30px 0', boxSizing: 'border-box', overflowX: 'hidden',
+      padding: '16px 0', boxSizing: 'border-box', overflow: 'hidden',
       fontFamily: 'var(--font-sans), system-ui, -apple-system, sans-serif', color: '#ccd6f6',
     }}>
       {/* Star field — fixed so it stays behind even when page scrolls */}
@@ -499,12 +499,13 @@ export default function Home() {
       <canvas ref={celebrateCanvasRef} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 999, pointerEvents: 'none' }} />
 
       {/* Central card */}
-      <div ref={cardRef} style={{
+      <div ref={cardRef} className="cyber-scroll" style={{
         position: 'relative', zIndex: 10, width: 'min(520px, 90vw)',
+        maxHeight: 'calc(100dvh - 72px)', overflowY: 'auto',
         borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)',
         background: 'rgba(10,15,30,0.75)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
         boxShadow: '0 0 120px rgba(0,255,213,0.07), 0 30px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)',
-        padding: 'clamp(24px, 4vw, 36px)',
+        padding: 'clamp(20px, 3vw, 32px)',
         transition: 'opacity 0.8s ease, transform 0.3s ease',
         opacity: mounted ? 1 : 0,
         transformStyle: 'preserve-3d', willChange: 'transform',
@@ -634,7 +635,7 @@ export default function Home() {
           )}
 
           {/* Terminal content */}
-          <div ref={termScrollRef} style={{
+          <div ref={termScrollRef} className="cyber-scroll" style={{
             padding: '10px 14px',
             maxHeight: hackingActive ? 'clamp(180px, 30vh, 300px)' : 'clamp(120px, 22vh, 220px)',
             overflowY: 'auto', position: 'relative', zIndex: 2,
@@ -754,6 +755,27 @@ export default function Home() {
           0% { opacity: 0.3; transform: translateX(-100%); }
           50% { opacity: 1; transform: translateX(0); }
           100% { opacity: 0.3; transform: translateX(100%); }
+        }
+
+        /* Custom scrollbar — terminal + card */
+        .cyber-scroll::-webkit-scrollbar {
+          width: 6px;
+        }
+        .cyber-scroll::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.3);
+          border-radius: 3px;
+        }
+        .cyber-scroll::-webkit-scrollbar-thumb {
+          background: rgba(0, 255, 213, 0.25);
+          border-radius: 3px;
+        }
+        .cyber-scroll::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 255, 213, 0.5);
+        }
+        /* Firefox */
+        .cyber-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(0, 255, 213, 0.25) rgba(0, 0, 0, 0.3);
         }
       `}</style>
     </div>
