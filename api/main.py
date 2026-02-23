@@ -36,4 +36,5 @@ def system_info() -> dict:
         "uptime_seconds": int(time.time() - START_TIME),
         "python_version": platform.python_version(),
         "stack": ["FastAPI", "Next.js", "Docker", "Coolify", "GitHub Actions"],
+        "deploy_mode": "auto",
     }

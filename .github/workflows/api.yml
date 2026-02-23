@@ -1,12 +1,14 @@
-name: CI
+name: API
 
 on:
   push:
     branches: [main]
+    paths: [api/**]
   pull_request:
+    paths: [api/**]
 
 jobs:
-  api:
+  test:
     name: API checks (FastAPI)
     runs-on: ubuntu-latest
     defaults:
@@ -57,40 +59,17 @@ jobs:
           print('API smoke tests passed ✅')
           PY
 
-  web:
-    name: Web checks (Next.js)
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
   deploy:
-    name: Deploy to Coolify
+    name: Deploy API to Coolify
     runs-on: ubuntu-latest
-    needs: [api, web]
+    needs: test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
-      - name: Trigger Coolify deployment
+      - name: Trigger API deployment
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" --request GET '${{ secrets.COOLIFY_WEBHOOK }}' --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}')
-          echo "Coolify responded with HTTP $response"
+          response=$(curl -s -o /dev/null -w "%{http_code}" --request GET '${{ secrets.COOLIFY_WEBHOOK_API }}' --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}')
+          echo "API deploy: HTTP $response"
           if [ "$response" != "200" ]; then
-            echo "Deployment trigger failed!"
+            echo "API deployment trigger failed!"
             exit 1
           fi
